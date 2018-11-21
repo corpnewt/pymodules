@@ -1,8 +1,16 @@
 import binascii, subprocess
 
-def bdmesg():
-    # Runs ioreg -l -p IODeviceTree -w0 and searches for "boot-log"
-    p = subprocess.Popen(["ioreg","-l","-p","IODeviceTree","-w0"], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+def bdmesg(just_clover = True):
+    b = None
+    if not just_clover:
+        b = _bdmesg(["ioreg","-l","-p","IOService","-w0"])
+    if not b:
+        b = _bdmesg(["ioreg","-l","-p","IODeviceTree","-w0"])
+    return b
+
+def _bdmesg(comm):
+    # Runs the passed command and searches for "boot-log"
+    p = subprocess.Popen(comm, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     bd, be = p.communicate()
     for line in bd.decode("utf-8").split("\n"):
         # We're just looking for the "boot-log" property, then we need to format it
