@@ -96,7 +96,7 @@ class Run:
         except:
             if c == None:
                 return ("", "Command not found!", 1)
-        return (c[0].decode("utf-8", "ignore"), c[1].decode("utf-8", "ignore"), p.returncode)
+        return (self._decode(c[0]), self._decode(c[1]), p.returncode)
 
     def run(self, command_list, leave_on_fail = False):
         # Command list should be an array of dicts
