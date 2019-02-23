@@ -79,10 +79,10 @@ class Run:
                 return (output, error, p.returncode)
             return ("", "Command not found!", 1)
 
-    def _decode(self, value):
+    def _decode(self, value, encoding="utf-8", errors="ignore"):
         # Helper method to only decode if bytes type
         if sys.version_info >= (3,0) and isinstance(value, bytes):
-            return value.decode("utf-8","ignore")
+            return value.decode(encoding,errors)
         return value
 
     def _run_command(self, comm, shell = False):
