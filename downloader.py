@@ -1,29 +1,30 @@
 import sys, os, time, ssl
 # Python-aware urllib stuff
 if sys.version_info >= (3, 0):
-    from urllib.request import urlopen
+    from urllib.request import urlopen, Request
 else:
     # Import urllib2 to catch errors
     import urllib2
-    from urllib2 import urlopen
+    from urllib2 import urlopen, Request
 
 class Downloader:
 
     def __init__(self):
         return
 
-    def open_url(self, url):
+    def open_url(self, url, headers = None):
         # Wrap up the try/except block so we don't have to do this for each function
         try:
-            response = urlopen(url)
+            response = urlopen(Request(url, headers=headers))
         except Exception as e:
+            print(e)
             if sys.version_info >= (3, 0) or not (isinstance(e, urllib2.URLError) and "CERTIFICATE_VERIFY_FAILED" in str(e)):
                 # Either py3, or not the right error for this "fix"
                 return None
             # Py2 and a Cert verify error - let's set the unverified context
             context = ssl._create_unverified_context()
             try:
-                response = urlopen(url, context=context)
+                response = urlopen(Request(url, headers=headers))
             except:
                 # No fixing this - bail
                 return None
@@ -63,8 +64,8 @@ class Downloader:
         else:
             sys.stdout.write("Downloaded {}\r".format(b_s))
 
-    def get_string(self, url, progress = True):
-        response = self.open_url(url)
+    def get_string(self, url, progress = True, headers = None):
+        response = self.open_url(url, headers)
         if not response:
             return None
         CHUNK = 16 * 1024
@@ -84,8 +85,8 @@ class Downloader:
             chunk_so_far += chunk
         return chunk_so_far.decode("utf-8")
 
-    def get_bytes(self, url, progress = True):
-        response = self.open_url(url)
+    def get_bytes(self, url, progress = True, headers = None):
+        response = self.open_url(url, headers)
         if not response:
             return None
         CHUNK = 16 * 1024
@@ -105,8 +106,8 @@ class Downloader:
             chunk_so_far += chunk
         return chunk_so_far
 
-    def stream_to_file(self, url, file, progress = True):
-        response = self.open_url(url)
+    def stream_to_file(self, url, file, progress = True, headers = None):
+        response = self.open_url(url, headers)
         if not response:
             return None
         CHUNK = 16 * 1024
