@@ -9,7 +9,8 @@ else:
 
 class Downloader:
 
-    def __init__(self):
+    def __init__(self,**kwargs):
+        self.ua = kwargs.get("useragent",{"User-Agent":"Mozilla"})
         return
 
     def _decode(self, value, encoding="utf-8", errors="ignore"):
@@ -19,6 +20,8 @@ class Downloader:
         return value
 
     def open_url(self, url, headers = None):
+        # Fall back on the default ua if none provided
+        headers = self.ua if headers == None else headers
         # Wrap up the try/except block so we don't have to do this for each function
         try:
             response = urlopen(Request(url, headers=headers))
