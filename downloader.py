@@ -12,12 +12,17 @@ class Downloader:
     def __init__(self):
         return
 
+    def _decode(self, value, encoding="utf-8", errors="ignore"):
+        # Helper method to only decode if bytes type
+        if sys.version_info >= (3,0) and isinstance(value, bytes):
+            return value.decode(encoding,errors)
+        return value
+
     def open_url(self, url, headers = None):
         # Wrap up the try/except block so we don't have to do this for each function
         try:
             response = urlopen(Request(url, headers=headers))
         except Exception as e:
-            print(e)
             if sys.version_info >= (3, 0) or not (isinstance(e, urllib2.URLError) and "CERTIFICATE_VERIFY_FAILED" in str(e)):
                 # Either py3, or not the right error for this "fix"
                 return None
@@ -83,7 +88,7 @@ class Downloader:
             if not chunk:
                 break
             chunk_so_far += chunk
-        return chunk_so_far.decode("utf-8")
+        return self._decode(chunk_so_far)
 
     def get_bytes(self, url, progress = True, headers = None):
         response = self.open_url(url, headers)
