@@ -206,3 +206,45 @@ class DSDT:
                 continue
             break
         return pad
+    
+    def get_devices(self,search=None,types=("Device (","Scope ("),strip_comments=False):
+        # Returns a list of tuples organized as (Device/Scope,d_s_index,matched_index)
+        if search == None:
+            return []
+        last_device = None
+        device_index = 0
+        devices = []
+        for index,line in enumerate(self.dsdt_lines):
+            if self.is_hex(line):
+                continue
+            line = self.get_line(line) if strip_comments else line
+            if any ((x for x in types if x in line)):
+                # Got a last_device match
+                last_device = line
+                device_index = index
+            if search in line:
+                # Got a search hit - add it
+                devices.append((last_device,device_index,index))
+        return devices
+
+    def get_scope(self,starting_index=0,add_hex=False,strip_comments=False):
+        # Walks the scope starting at starting_index, and returns when
+        # we've exited
+        brackets = None
+        scope = []
+        for line in self.dsdt_lines[starting_index:]:
+            if self.is_hex(line):
+                if add_hex:
+                    scope.append(line)
+                continue
+            line = self.get_line(line) if strip_comments else line
+            scope.append(line)
+            if brackets == None:
+                if line.count("{"):
+                    brackets = line.count("{")
+                continue
+            brackets = brackets + line.count("{") - line.count("}")
+            if brackets <= 0:
+                # We've exited the scope
+                return scope
+        return scope
