@@ -38,11 +38,11 @@ class Downloader:
                 return None
         return response
 
-    def get_size(self, size, suffix=None, use_1024=False, truncate=2, strip_zeroes=False):
+    def get_size(self, size, suffix=None, use_1024=False, round_to=2, strip_zeroes=False):
         # size is the number of bytes
         # suffix is the target suffix to locate (B, KB, MB, etc) - if found
         # use_2014 denotes whether or not we display in MiB vs MB
-        # truncate is the number of dedimal points to truncate our result in (0-15)
+        # round_to is the number of dedimal points to round our result to (0-15)
         # strip_zeroes denotes whether we strip out zeroes 
         #   True:   Strip all 0s from the right of the decimal and remove decimal if needed
         #   False:  Show the number as-is
@@ -64,19 +64,15 @@ class Downloader:
         suffix = next((x for x in ext if x.lower() == suffix.lower()),None) if suffix else suffix
         # Get the largest value that's still over 1
         biggest = suffix if suffix else next((x for x in ext[::-1] if s_dict[x] >= 1), "B")
-        # Determine our truncation approach - first make sure it's an int; default to 2 on error
-        try:truncate=int(truncate)
-        except:truncate=2
-        truncate = 0 if truncate < 0 else 15 if truncate > 15 else truncate # Ensure it's between 0 and 15
-        bval = round(s_dict[biggest], truncate)
+        # Determine our rounding approach - first make sure it's an int; default to 2 on error
+        try:round_to=int(round_to)
+        except:round_to=2
+        round_to = 0 if round_to < 0 else 15 if round_to > 15 else round_to # Ensure it's between 0 and 15
+        bval = round(s_dict[biggest], round_to)
         # Split our number based on decimal points
         a,b = str(bval).split(".")
-        # Check if we need to strip zeroes
-        if strip_zeroes:
-            b = b.rstrip("0")
-        elif len(b) != truncate:
-            # Since we already rounded to x places - let's pad as needed
-            b = b.ljust(truncate,"0")
+        # Check if we need to strip or pad zeroes
+        b = b.rstrip("0") if strip_zeroes else b.ljust(round_to,"0") if round_to > 0 else ""
         return "{:,}{} {}".format(int(a),"" if not b else "."+b,biggest)
 
     def _progress_hook(self, response, bytes_so_far, total_size):
