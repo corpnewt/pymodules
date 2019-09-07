@@ -67,7 +67,7 @@ class Downloader:
         # Determine our truncation approach - first make sure it's an int; default to 2 on error
         try:truncate=int(truncate)
         except:truncate=2
-        truncate = 0 if truncate < 0 else 15 if truncate > 15 else truncate # Ensure it's between 0 and 10
+        truncate = 0 if truncate < 0 else 15 if truncate > 15 else truncate # Ensure it's between 0 and 15
         bval = round(s_dict[biggest], truncate)
         # Split our number based on decimal points
         a,b = str(bval).split(".")
