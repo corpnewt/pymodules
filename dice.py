@@ -26,6 +26,10 @@ class RollParser:
         # Walks the next character, and parses accordingly
         if self.index >= len(self.roll_string):
             # Let's assign any defaults
+            if "dice" in self.roll and not "sides" in self.roll:
+                # used 2-5d type syntax - assume d20
+                self.roll["sides"] = self.roll["dice"]
+                self.roll["dice"]  = 1
             self.roll["dice"]     = int(self.roll.get("dice",1))
             self.roll["sides"]    = int(self.roll.get("sides",20))
             self.roll["mod_sign"] = self.roll.get("mod_sign",True)
@@ -125,7 +129,7 @@ class Roller:
             y["rolls"][0]["total"],
             " ({})".format(y["rolls"][0]["crit_string"]) if y["rolls"][0]["crit_string"] else ""
         ) for x,y in enumerate(roll_list)])
-        if len(roll_string) > self.max_chars: return MAX_CHARS
+        # if len(roll_string) > self.max_chars: return MAX_CHARS
         return roll_string
 
     def roll_string(self, roll = None):
