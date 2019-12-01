@@ -59,15 +59,15 @@ class RollParser:
                 return self.parse()
             if not char.isnumeric(): return INVALID # Not "+-" and not numeric - bail
             self.roll["sides"] = self.roll.get("sides","")+char
-        else: # elif self.stage == 2: # We're checking for the modifier
+        elif self.stage == 2: # We're checking for the modifier
             if char.lower() in "da":
                 self.roll["adv_dis"] = (char.lower() == "a")
                 self.stage += 1
                 # We got our last char - let's force exit
-                self.index = len(self.roll_string)
                 return self.parse()
             if not char.isnumeric(): return INVALID # Not "da" and not numeric - bail
             self.roll["mod"] = self.roll.get("mod","")+char
+        else: return INVALID # Extra chars - this isn't right
         return self.parse()
 
 class Roller:
