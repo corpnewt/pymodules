@@ -1,6 +1,5 @@
 import os, sys
-sys.path.append(os.path.abspath(os.path.dirname(os.path.realpath(__file__))))
-import run
+from . import run
 
 class IOReg:
     def __init__(self):
