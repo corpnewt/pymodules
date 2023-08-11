@@ -140,7 +140,7 @@ class Utils:
         default = kwargs.get("default", None)
         # If we don't have a timeout - then skip the timed sections
         if timeout <= 0:
-            if sys.version_info >= (3, 0):
+            if sys.version_info >= (3,0):
                 return input(prompt)
             else:
                 return str(raw_input(prompt))
@@ -155,8 +155,10 @@ class Utils:
                     c = msvcrt.getche()
                     if ord(c) == 13: # enter_key
                         break
-                    elif ord(c) >= 32: #space_char
-                        i += c
+                    elif ord(c) >= 32: # space_char
+                        i += c.decode() if sys.version_info >= (3,0) and isinstance(c,bytes) else c
+                else:
+                    time.sleep(0.02) # Delay for 20ms to prevent CPU workload
                 if len(i) == 0 and (time.time() - start_time) > timeout:
                     break
         else:
