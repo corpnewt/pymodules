@@ -10,7 +10,10 @@ class IOReg:
         # Attempts to reformat an item from NAME@X,Y to NAME@X000000Y
         try:
             name,addr = item.split("@")
-            cont,port = addr.split(",")
+            if "," in addr:
+                cont,port = addr.split(",")
+            else:
+                cont,port = addr,"0"
             item = name+"@"+hex(int(port,16)+(int(cont,16)<<20)).replace("0x","")
         except:
             pass
@@ -21,7 +24,7 @@ class IOReg:
         try:
             name,addr = item.split("@")
             if len(addr)<5:
-                return "{}@{},0".format(name,addr)
+                return "{}@0,{}".format(name,addr)
             port = int(addr,16) & 0xFFFF
             cont = int(addr,16) >> 20 & 0xFFFF
             item = name+"@"+hex(cont).replace("0x","")
@@ -31,11 +34,40 @@ class IOReg:
             pass
         return item
 
+    def _get_pcix_uid(self,item,**kwargs):
+        # Helper to walk the IOACPIPlane looking for the passed item's _UID
+        # Expects a XXXX@Y style string
+        if kwargs.get("force") or not self.ioreg.get("IOACPIPlane"):
+            self.ioreg["IOACPIPlane"] = self.r.run({"args":["ioreg","-lw0","-p","IOACPIPlane"]})[0].split("\n")
+        # Ensure our item ends with 2 spaces
+        item = item.rstrip()+"  "
+        item_uid = None
+        found_device = False
+        for line in self.ioreg["IOACPIPlane"]:
+            if item in line:
+                found_device = True
+                continue
+            if not found_device:
+                continue # Haven't found it yet
+            # We have the device here - let's look for _UID or a closing
+            # curly bracket
+            if line.replace("|","").strip() == "}":
+                break # Bail on the loop
+            elif '"_UID" = "' in line:
+                # Got a _UID - let's rip it
+                try:
+                    item_uid = int(line.split('"_UID" = "')[1].split('"')[0])
+                except:
+                    # Some _UIDs are strings - but we won't accept that here
+                    # as we're ripping it specifically for PciRoot/Pci pathing
+                    break
+        return item_uid
+
     def get_ioreg(self,**kwargs):
         force = kwargs.get("force",False)
         plane = kwargs.get("plane","IOService")
         if force or not self.ioreg.get(plane,None):
-            self.ioreg[plane] = self.r.run({"args":["ioreg", "-l", "-p", plane, "-w0"]})[0].split("\n")
+            self.ioreg[plane] = self.r.run({"args":["ioreg", "-lw0", "-p", plane]})[0].split("\n")
         return self.ioreg[plane]
 
     def get_devices(self,dev_list = None, **kwargs):
@@ -43,12 +75,12 @@ class IOReg:
         plane = kwargs.get("plane","IOService")
         # Iterate looking for our device(s)
         # returns a list of devices@addr
-        if dev_list == None:
+        if dev_list is None:
             return []
         if not isinstance(dev_list, list):
             dev_list = [dev_list]
         if force or not self.ioreg.get(plane,None):
-            self.ioreg[plane] = self.r.run({"args":["ioreg", "-l", "-p", plane, "-w0"]})[0].split("\n")
+            self.ioreg[plane] = self.r.run({"args":["ioreg", "-lw0", "-p", plane]})[0].split("\n")
         dev = []
         for line in self.ioreg[plane]:
             if any(x for x in dev_list if x in line) and "+-o" in line:
@@ -64,7 +96,7 @@ class IOReg:
         if not dev_search:
             return []
         if force or not self.ioreg.get(plane,None):
-            self.ioreg[plane] = self.r.run({"args":["ioreg", "-l", "-p", plane, "-w0"]})[0].split("\n")
+            self.ioreg[plane] = self.r.run({"args":["ioreg", "-lw0", "-p", plane]})[0].split("\n")
         dev = []
         primed = False
         current = None
@@ -108,7 +140,7 @@ class IOReg:
         # Work in reverse to find our path
         for x in path[::-1]:
             parts = x.split("+-o ")
-            if prefix == None or len(parts[0]) < len(prefix):
+            if prefix is None or len(parts[0]) < len(prefix):
                 # Path length changed, must be parent?
                 item = parts[1].split("  ")[0]
                 prefix = parts[0]
@@ -124,7 +156,7 @@ class IOReg:
         if not device:
             return ""
         if force or not self.ioreg.get(plane,None):
-            self.ioreg[plane] = self.r.run({"args":["ioreg", "-l", "-p", plane, "-w0"]})[0].split("\n")
+            self.ioreg[plane] = self.r.run({"args":["ioreg", "-lw0", "-p", plane]})[0].split("\n")
         path = []
         found = False
         # First we find our device if it exists - and save each step
@@ -156,7 +188,11 @@ class IOReg:
                 continue
             if not len(dev_path):
                 # First entry
-                dev_path = "PciRoot(0x{})".format(x.split("@")[1])
+                _uid = self._get_pcix_uid(x)
+                if _uid is None:
+                    # Broken path
+                    return ""
+                dev_path = "PciRoot(0x{})".format(hex(_uid)[2:].upper())
             else:
                 # Not first
                 x = self._get_dec_addr(x)
