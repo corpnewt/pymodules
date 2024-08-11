@@ -486,7 +486,7 @@ class Disk:
         return guid
 
     def get_volume_type(self, disk = None, disk_dict = None):
-        # Returns teh DAVolumeType or DAVolumeKind of the passed disk if any
+        # Returns the DAVolumeType or DAVolumeKind of the passed disk if any
         disk = self.get_disk(disk,disk_dict=disk_dict)
         if not disk: return
         if "DAVolumeType" in disk: return disk["DAVolumeType"]
