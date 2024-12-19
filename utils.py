@@ -172,7 +172,10 @@ class Utils:
             return default
 
     def cls(self):
-    	os.system('cls' if os.name=='nt' else 'clear')
+        if os.name == "nt":
+            os.system("cls")
+        elif os.environ.get("TERM"):
+            os.system("clear")
 
     def cprint(self, message, **kwargs):
         strip_colors = kwargs.get("strip_colors", False)
