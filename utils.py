@@ -136,14 +136,17 @@ class Utils:
     def grab(self, prompt, **kwargs):
         # Takes a prompt, a default, and a timeout and shows it with that timeout
         # returning the result
-        timeout = kwargs.get("timeout", 0)
-        default = kwargs.get("default", None)
+        timeout = kwargs.get("timeout",0)
+        default = kwargs.get("default","")
         # If we don't have a timeout - then skip the timed sections
         if timeout <= 0:
-            if sys.version_info >= (3,0):
-                return input(prompt)
-            else:
-                return str(raw_input(prompt))
+            try:
+                if sys.version_info >= (3, 0):
+                    return input(prompt)
+                else:
+                    return str(raw_input(prompt))
+            except EOFError:
+                return default
         # Write our prompt
         sys.stdout.write(prompt)
         sys.stdout.flush()
