@@ -1,4 +1,4 @@
-import os, sys, binascii, json
+import os, sys, binascii, json, gzip
 from . import run
 
 class IOReg:
@@ -109,13 +109,23 @@ class IOReg:
         if not self.pci_ids:
             # Hasn't already been processed - see if it exists, and load it if so
             pci_ids_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"pci.ids")
-            if os.path.isfile(pci_ids_path):
+            pci_ids_gz_path = pci_ids_path+".gz"
+            if os.path.isfile(pci_ids_gz_path):
+                # Prioritize the gzip file if found
+                try:
+                    self.pci_ids = gzip.open(pci_ids_gz_path) \
+                    .read().decode(errors="ignore").replace("\r","") \
+                    .split("\n")
+                except:
+                    pass
+            if not self.pci_ids and os.path.isfile(pci_ids_path):
                 # Try loading the file
                 try:
                     with open(pci_ids_path,"rb") as f:
-                        self.pci_ids = f.read().decode(errors="ignore").replace("\r","").split("\n")
+                        self.pci_ids = f.read().decode(errors="ignore") \
+                        .replace("\r","").split("\n")
                 except:
-                    return None
+                    pass
             # Check again
             if not self.pci_ids:
                 return None
