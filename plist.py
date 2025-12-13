@@ -386,7 +386,7 @@ class _BinaryPlistParser:
         elif tokenH == 0x10:  # int
             result = int(binascii.hexlify(self._fp.read(1 << tokenL)),16)
             if tokenL >= 3: # Signed - adjust
-                result = result-((result & 1 << 2**tokenL*8-1)*2)
+                result = result-(result & 1 << 2**tokenL*8-1)*2
 
         elif token == 0x22: # real
             result = struct.unpack('>f', self._fp.read(4))[0]
