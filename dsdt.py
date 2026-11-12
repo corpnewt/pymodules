@@ -342,7 +342,7 @@ class DSDT:
         try:
             release_source = self.dl.get_string(self.acpi_github_windows, progress=False, headers=self.h)
             # Gather the latest releases and compare them to our blacklist
-            releases = [x.split('"')[0] for x in release_source.split('<li data-item-id="release-')[1:]]
+            releases = [x.split('"')[0] for x in release_source.split('/acpica/releases/tag/')[1:]]
             allowed_releases = [x for x in releases if not x in self.acpi_github_blacklist]
             if not allowed_releases:
                 allowed_releases = ["latest"] # Fall back on the latest if nothing else
